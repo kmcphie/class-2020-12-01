@@ -33,6 +33,15 @@ age ~ sex + solo + primary_04 + primary_06 + treatment + sex:solo
 
 * Are you surprised about the meaningfulness, or lack thereof, for the treatment variables?
 
+```{r}
+fit_1 <- stan_glm(formula = age ~ sex + solo + primary_04 + primary_02 + treatment + sex:solo,
+                  data = week_12,
+                  refresh = 0)
+```
+
+```{r}
+print(fit_1, digits = 3)
+```
 
 
 
@@ -41,6 +50,32 @@ age ~ sex + solo + primary_04 + primary_06 + treatment + sex:solo
 **Prompt:** Provide a posterior probability distribution for the expected difference in ages between those who live alone and those who do not. (Hint: Given that we are asking for an expected value, use `posterior_epred()`.)
 
 
+```{r}
+new_obs <- tibble(solo = c(TRUE, FALSE),
+                  sex = "Female",
+                  primary_02 = "No",
+                  primary_04 = "No",
+                  treatment = "Control")
+
+posterior_epred(fit_1,
+                newdata = new_obs) %>%
+  as_tibble() %>%
+  rename(soloTRUE = `1`,
+         soloFALSE = `2`) %>%
+  mutate(diff = soloTRUE - soloFALSE) %>%
+  ggplot(aes(x = diff)) +
+    geom_histogram(aes(y = after_stat(count / sum(count))),
+                   bins = 100,
+                   alpha = 0.5) +
+    labs(
+      title = "Posterior Probability Distribution",
+      subtitle = "Expected Difference in Age Between Those \nWho Live Alone and Those Who Don't",
+      x = "Difference (Years)",
+      y = "Percent"
+    ) +
+    scale_y_continuous(labels = scales::percent_format()) +
+    theme_bw()
+```
 
 
 
